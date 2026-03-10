@@ -11,3 +11,8 @@ faiss-cpu
 
 # Config
 python-dotenv
+
+# testing
+pytest
+
+# This is a change on dev
