@@ -1,0 +1,13 @@
+# RAG & document loading
+langchain
+langchain-community
+langchain-classic
+langchain-openai
+langchain-text-splitters
+pypdf
+
+# Vector store
+faiss-cpu
+
+# Config
+python-dotenv
