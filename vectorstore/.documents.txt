@@ -1,2 +1,2 @@
-/Users/omarhaweel/Desktop/docQuery/Documents/CV-Helsefaglig.pdf
-/Users/omarhaweel/Desktop/docQuery/Documents/Jobbsøkerplan.pdf
+/app/Documents/CV-Helsefaglig.pdf
+/app/Documents/Jobbsøkerplan.pdf
