@@ -1,14 +1,13 @@
-# Build and push Docker images for backend and frontend to GitHub Container Registry.
-# Runs on push to main and dev (and on pull_request to main for validation).
-# Images: ghcr.io/<owner>/docquery/backend, ghcr.io/<owner>/docquery/frontend
+# Tests + Docker build/push. Runs on push and PR to main and dev.
+# Push: test → build and push images to ghcr.io. PR: test only (no push).
 
-name: Docker build and push
+name: CI & Docker
 
 on:
   push:
     branches: [main, dev]
   pull_request:
-    branches: [main]
+    branches: [main, dev]
 
 env:
   REGISTRY: ghcr.io
