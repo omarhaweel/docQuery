@@ -25,23 +25,33 @@ from langchain_openai import ChatOpenAI
 # -----------------------------------------------------------------------------
 load_dotenv()
 
-DOCUMENTS_DIR = "Documents"
-if os.path.isdir(DOCUMENTS_DIR):
-    paths = []
-    for path in Path(DOCUMENTS_DIR).rglob("*.pdf"):
-        paths.append(str(path))
-    DOCUMENT_PATHS = paths
-else:
-    DOCUMENT_PATHS = []
+# Paths relative to project root (parent of backend/), so the API works regardless of cwd.
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+VECTORSTORE_DIR = os.path.join(_PROJECT_ROOT, "vectorstore")
 
+DOCUMENTS_DIR = None
+DOCUMENT_PATHS = []
+for _candidate in (
+    os.path.join(_PROJECT_ROOT, "Documents"),
+    os.path.join(_PROJECT_ROOT, "backend", "Documents"),
+):
+    if os.path.isdir(_candidate):
+        paths = [str(p) for p in Path(_candidate).rglob("*.pdf")]
+        if paths:
+            DOCUMENTS_DIR = _candidate
+            DOCUMENT_PATHS = paths
+            break
+
+if not DOCUMENT_PATHS:
+    raise FileNotFoundError(
+        f"No PDFs found. Add PDFs under Documents/ or backend/Documents/ and try again."
+    )
 
 
 # larger chunks = more context
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 150
 LLM_MODEL = "gpt-4o"
-# Single vector store for all documents.
-VECTORSTORE_DIR = "./vectorstore"
 
 # -----------------------------------------------------------------------------
 # 2. LOAD DOCUMENTS
@@ -91,13 +101,29 @@ def _index_matches_current_documents():
     current = _normalized_document_list()
     return saved == current
 
+
+def _clear_directory(path: str) -> None:
+    """Remove contents of a directory but not the directory itself. Safe for Docker volume mounts."""
+    if not os.path.isdir(path):
+        return
+    for name in os.listdir(path):
+        entry = os.path.join(path, name)
+        if os.path.isdir(entry):
+            shutil.rmtree(entry)
+        else:
+            os.remove(entry)
+
+
 # Load from disk only if the index exists AND was built from the same documents.
 if os.path.isdir(VECTORSTORE_DIR) and _index_matches_current_documents():
     vectorstore = FAISS.load_local(VECTORSTORE_DIR, embeddings, allow_dangerous_deserialization=True)
 else:
-    if os.path.isdir(VECTORSTORE_DIR):
-        shutil.rmtree(VECTORSTORE_DIR)
+    if not chunks:
+        raise FileNotFoundError(
+            f"No PDFs found in {DOCUMENTS_DIR}. Add PDFs there and try again, or run from the project root."
+        )
     os.makedirs(VECTORSTORE_DIR, exist_ok=True)
+    _clear_directory(VECTORSTORE_DIR)
     vectorstore = FAISS.from_documents(chunks, embeddings)
     vectorstore.save_local(VECTORSTORE_DIR)
     with open(MANIFEST_FILE, "w") as f:

@@ -1,0 +1,28 @@
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      # Mounting Documents and vectorstore for the backend to use
+      - ./backend/Documents:/app/Documents:ro
+      - ./vectorstore:/app/vectorstore
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        # Browser will call the API at this URL (host machine when using compose from same machine)
+        API_URL: http://localhost:8000
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
