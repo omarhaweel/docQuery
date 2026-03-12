@@ -1,13 +1,15 @@
-# Tests + Docker build/push. Runs on push and PR to main and dev.
-# Push: test → build and push images to ghcr.io. PR: test only (no push).
+# Dev vs prod: Push to dev (staging). Merge dev → main via PR (production).
+# - Push to dev: run tests, build and push images (tag: dev).
+# - PR to main: run tests only (validate before merge).
+# - Push to main (after merge): run tests, build and push images (tag: main) = production.
 
 name: CI & Docker
 
 on:
   push:
-    branches: [main, dev]
+    branches: [dev, main]
   pull_request:
-    branches: [main, dev]
+    branches: [main]
 
 env:
   REGISTRY: ghcr.io
