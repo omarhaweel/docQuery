@@ -19,8 +19,7 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        # Browser will call the API at this URL (host machine when using compose from same machine)
-        API_URL: http://localhost:8000
+        BACKEND_URL: http://localhost:8000
     ports:
       - "3000:80"
     depends_on:
