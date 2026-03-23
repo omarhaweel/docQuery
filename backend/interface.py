@@ -16,8 +16,12 @@ app = FastAPI(title="DocQuery RAG API", description="Chat with your documents.")
 # CORS so the frontend (different port) can call the API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://docquery-frontend.onrender.com",
+    ],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
