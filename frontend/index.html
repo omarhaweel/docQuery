@@ -171,7 +171,10 @@
     const input = document.getElementById("input");
     const sendBtn = document.getElementById("send");
 
-    const API_BASE = "__BACKEND_URL__";
+    const API_BASE =
+      window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+        ? "http://127.0.0.1:8000"
+        : "https://docquery-backend.onrender.com";
 
     function addMessage(content, role, isError = false) {
       const div = document.createElement("div");

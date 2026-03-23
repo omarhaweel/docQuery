@@ -45,10 +45,11 @@ Follow these steps to host the **backend** and **frontend** on [Render](https://
    - **Root Directory:** leave blank.
    - **Runtime:** **Docker**.
    - **Dockerfile Path:** `frontend/Dockerfile`.
-4. **Build-time environment (required):**
-   - Add: `BACKEND_URL` = your backend URL from Step 1, e.g. `https://docquery-api.onrender.com` (no trailing slash).
-   - This is used during the Docker build to set the API URL in the frontend.
-5. **No run-time env vars are required** for the frontend.
+4. **Environment (required) — runtime, not only build:**
+   - Add: `BACKEND_URL` = your backend’s **public HTTPS** URL from Step 1, e.g. `https://docquery-api.onrender.com` (**no trailing slash**).
+   - The frontend Docker image substitutes this when the **container starts**, so you can change it in the dashboard and redeploy without rebuilding from a wrong baked-in URL.
+   - **Must be `https://`** if your frontend is served over HTTPS (mixed content: `http://` API from an `https://` page is blocked by the browser).
+5. After changing `BACKEND_URL`, trigger a new deploy (or restart) so nginx picks up the value.
 6. Click **Create Web Service**. Wait for the build and deploy.
 7. Open the frontend URL (e.g. `https://docquery-app.onrender.com`) and test the chat; it should call your backend.
 
