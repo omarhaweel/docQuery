@@ -26,13 +26,20 @@ Follow these steps to host the **backend** and **frontend** on [Render](https://
 4. **Environment:**
    - Add variable: `OPENAI_API_KEY` = your OpenAI API key (mark as **Secret**).
 5. **Documents and vectorstore (important):**
-   - The backend expects PDFs in `backend/Documents/` and can use a `vectorstore/` directory.
+   - The backend loads PDFs from `backend/Documents/` (or repo-root `Documents/`).
+   - The FAISS index is stored under **`backend/vectorstore/`** when that folder exists (this matches the Docker image layout). Committing a prebuilt `backend/vectorstore` avoids re-embedding every deploy (much faster and more reliable on Render).
    - On Render’s free tier there is **no persistent disk**, so:
      - **Option A:** Put the PDFs you need inside the repo under `backend/Documents/`. They will be in the image and the vectorstore will be built on each deploy (slower first request after deploy).
      - **Option B:** Use a [Render Disk](https://render.com/docs/disks) (paid), mount it, and put `Documents` and `vectorstore` there; you’d need to adjust the backend to read from the mounted path.
    - For a simple first deploy, use **Option A**: add your PDFs under `backend/Documents/` and commit them (or use a few small test PDFs).
 6. Click **Create Web Service**. Wait for the first build and deploy.
 7. Copy your backend URL, e.g. `https://docquery-api.onrender.com` (no trailing slash). You’ll need it for the frontend.
+
+### Debug if the frontend “doesn’t get a response”
+
+- Open **`https://<your-backend>.onrender.com/health`** → should be `{"status":"ok"}` (service is up).
+- Open **`https://<your-backend>.onrender.com/ready`** → should be `{"status":"ready"}`. If you get `503` with a `detail` message, that’s the real error (e.g. missing `OPENAI_API_KEY`, no PDFs, or pipeline crash).
+- Ensure **`OPENAI_API_KEY`** is set on the **backend** service in Render (not only locally in `.env`).
 
 ---
 

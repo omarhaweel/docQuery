@@ -27,7 +27,10 @@ load_dotenv()
 
 # Paths relative to project root (parent of backend/), so the API works regardless of cwd.
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-VECTORSTORE_DIR = os.path.join(_PROJECT_ROOT, "vectorstore")
+# Docker / monorepo: index ships under backend/vectorstore. Local dev may use repo-root vectorstore/.
+_BACKEND_VS = os.path.join(_PROJECT_ROOT, "backend", "vectorstore")
+_ROOT_VS = os.path.join(_PROJECT_ROOT, "vectorstore")
+VECTORSTORE_DIR = _BACKEND_VS if os.path.isdir(_BACKEND_VS) else _ROOT_VS
 
 DOCUMENTS_DIR = None
 DOCUMENT_PATHS = []
@@ -86,8 +89,30 @@ MANIFEST_FILE = os.path.join(VECTORSTORE_DIR, ".documents.txt")
 
 
 def _normalized_document_list():
-    """Sorted, normalized paths for comparison."""
-    return sorted(os.path.abspath(p) for p in DOCUMENT_PATHS)
+    """Sorted paths relative to project root (portable across machines / Docker)."""
+    keys = []
+    for p in DOCUMENT_PATHS:
+        rel = os.path.normpath(os.path.relpath(os.path.abspath(p), _PROJECT_ROOT)).replace("\\", "/")
+        keys.append(rel)
+    return sorted(keys)
+
+def _manifest_lines_to_keys(lines):
+    """Normalize manifest lines (absolute or relative) to project-relative keys."""
+    keys = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        p = os.path.abspath(line if os.path.isabs(line) else os.path.join(_PROJECT_ROOT, line))
+        try:
+            rel = os.path.normpath(os.path.relpath(p, _PROJECT_ROOT)).replace("\\", "/")
+        except ValueError:
+            continue
+        if rel.startswith(".."):
+            continue
+        keys.append(rel)
+    return sorted(keys)
+
 
 def _index_matches_current_documents():
     """True if the saved index was built from the same document set as DOCUMENT_PATHS."""
@@ -95,11 +120,10 @@ def _index_matches_current_documents():
         return False
     try:
         with open(MANIFEST_FILE, "r") as f:
-            saved = sorted(line.strip() for line in f if line.strip())
+            saved_lines = [ln.strip() for ln in f if ln.strip()]
     except OSError:
         return False
-    current = _normalized_document_list()
-    return saved == current
+    return _manifest_lines_to_keys(saved_lines) == _normalized_document_list()
 
 
 def _clear_directory(path: str) -> None:
